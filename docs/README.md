@@ -51,9 +51,9 @@ nano .env
 ### 3. Запуск
 
 ```bash
-# Автозапуск (создаёт venv, генерирует ключ, запускает на 127.0.0.1:8099)
+# Автозапуск (запускает на 127.0.0.1:8099)
 chmod +x run.sh
-./run.sh
+sudo ./run.sh
 
 # Или вручную
 export SAMBA_API_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
@@ -76,61 +76,6 @@ curl -H "X-API-Key: YOUR_KEY" http://127.0.0.1:8099/api/v1/users
 Откройте http://127.0.0.1:8099/docs в браузере для Swagger UI.
 
 ## CLI-клиент
-
-### Важно: порядок аргумента `--api-key`
-
-Флаг `--api-key` является опцией **корневой** команды и должен указываться **ДО** подкоманды:
-
-```bash
-# ПРАВИЛЬНО:
-python cli.py --api-key KEY user list
-python cli.py --api-key KEY domain info
-
-# НЕВЕРНО (click не распознает --api-key после подкоманды):
-python cli.py user list --api-key KEY
-```
-
-### Рекомендуемый способ: переменная окружения или .env
-
-Чтобы не указывать `--api-key` при каждом вызове, используйте один из способов:
-
-```bash
-# Способ 1: переменная окружения
-export SAMBA_API_KEY=your-key
-python cli.py user list
-python cli.py group list
-
-# Способ 2: файл .env в текущей директории
-# Создайте файл .env со строкой:
-# SAMBA_API_KEY=your-key
-# SAMBA_API_SERVER=http://127.0.0.1:8099
-python cli.py user list  # .env загружается автоматически
-```
-
-### Примеры команд
-
-```bash
-python cli.py user list
-python cli.py user create jsmith --given-name John --surname Smith
-python cli.py user show jsmith
-python cli.py group list
-python cli.py domain info --ip-address 127.0.0.1
-python cli.py dns zones list --server dc1.example.com
-python cli.py fsmo show
-python cli.py drs showrepl
-python cli.py gpo list
-python cli.py misc testparm
-```
-
-## Совместимость версий samba-tool
-
-API-сервер автоматически адаптируется к установленной версии `samba-tool`. Поддерживаются три уровня совместимости JSON-вывода:
-
-| Флаг | Версия Samba | Описание |
-|------|-------------|----------|
-| `--json` | 4.7+ | Прямой JSON-вывод |
-| `--output-format=json` | 4.9+ | Альтернативный формат JSON |
-| Без флага | Любая | Текстовый вывод |
 
 ### Режимы SAMBA_JSON_MODE
 
@@ -177,22 +122,6 @@ export SAMBA_JSON_MODE=force_output_format
 - `GET /api/v1/delegation/` — нет подкоманды `list`; только `show` для конкретной учётной записи
 - `GET /api/v1/misc/forest/info` — нет подкоманды `forest info`; используйте LDAP или `domain info`
 - `GET /api/v1/misc/visualize` — нет подкоманды `drs visualize` в данной версии
-
-## Docker
-
-```bash
-# Сборка
-docker build -t samba-api-server .
-
-# Запуск
-docker run -d \
-  -p 8099:8099 \
-  -e SAMBA_API_KEY=your-secret-key \
-  -v /etc/samba:/etc/samba:ro \
-  -v /var/lib/samba:/var/lib/samba:ro \
-  --name samba-api \
-  samba-api-server
-```
 
 **Важно**: Для операций, требующих root (dbcheck, sysvolreset), контейнер должен работать с соответствующими привилегиями.
 
