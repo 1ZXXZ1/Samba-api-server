@@ -1,0 +1,94 @@
+name: ldbsearch-alt-linux-cli
+version: 1.0.0
+description: |
+  Token-optimized AI skill for querying Samba AD (ALT Linux) via ldbsearch/samba-tool CLI.
+  Covers all objectClasses, weighted attributes, DN paths, and search patterns for
+  the domain DC=<DOMAIN>,DC=<TLD>. Optimized for minimal token consumption per query.
+author: kcrb
+tags:
+  - ldap
+  - samba
+  - ldbsearch
+  - alt-linux
+  - active-directory
+  - cli
+  - sysadmin
+
+triggers:
+  - keywords:
+      - ldbsearch
+      - samba-tool
+      - sam.ldb
+      - ldap search
+      - AD query
+      - samba ad
+      - alt linux ad
+      - domain users
+      - domain groups
+      - domain computers
+      - GPO
+      - OU
+      - DNS zone
+      - trust
+      - site
+      - replication
+      - SID
+      - sAMAccountName
+      - userAccountControl
+  - patterns:
+      - "find (user|group|computer|OU) in (AD|domain|samba)"
+      - "list (all|domain) (users|groups|computers|GPOs)"
+      - "query (sam.ldb|ldb|samba)"
+      - "ldapsearch|ldbsearch command"
+      - "samba-tool (user|group|computer|gpo|dns|site|fsmo|drs|trust)"
+
+context_files:
+  - schema-compact.yml
+  - commands-reference.yml
+  - search-templates.yml
+  - uac-flags.yml
+  - dn-paths.yml
+
+instructions: |
+  ## LDBSearch ALT Linux CLI Skill
+
+  ### When to Use
+  When the user needs to query, search, or manage objects in a Samba Active Directory
+  domain on ALT Linux using ldbsearch, samba-tool, or related CLI tools.
+
+  ### Core Principle: MINIMAL TOKEN
+  - Always use the SHORTEST working command
+  - Request ONLY needed attributes (never `*`)
+  - Use `-s base/sub/one` to limit scope
+  - Use indexed attributes in filters: sAMAccountName, objectClass, objectSid, cn, dn
+  - Prefer ldbsearch over ldapsearch (no SASL overhead)
+  - Use `--cross-ncs` ONLY when searching across naming contexts
+
+  ### Quick Decision Table
+  | Need | Tool | Example |
+  |------|------|---------|
+  | Count objects | ldbsearch + count dn lines | `ldbsearch -H sam.ldb '(objectClass=user)' dn | grep -c '^dn:'` |
+  | Find by name | ldbsearch + sAMAccountName | `ldbsearch -H sam.ldb '(sAMAccountName=usr1)'` |
+  | List groups of user | samba-tool user getgroups | `samba-tool user getgroups usr1` |
+  | List members of group | samba-tool group listmembers | `samba-tool group listmembers "Domain Admins"` |
+  | Create user | samba-tool user create | `samba-tool user create usr1 'P@ss'` |
+  | GPO list | samba-tool gpo listall | `samba-tool gpo listall` |
+  | DNS query | samba-tool dns query | `samba-tool dns query localhost domain.local @ ALL` |
+  | FSMO roles | samba-tool fsmo show | `samba-tool fsmo show` |
+  | Replication | samba-tool drs showrepl | `samba-tool drs showrepl` |
+  | Trust info | ldbsearch + trustedDomain | `ldbsearch -H sam.ldb '(objectClass=trustedDomain)'` |
+
+  ### DB Paths (ALT Linux Samba AD)
+  | DB | Path |
+  |----|------|
+  | sam.ldb | /var/lib/samba/private/sam.ldb |
+  | secrets.ldb | /var/lib/samba/private/secrets.ldb |
+  | configuration.ldb | /var/lib/samba/private/sam.ldb (partition) |
+  | schema.ldb | /var/lib/samba/private/sam.ldb (partition) |
+  | dns.ldb | /var/lib/samba/private/dns/%{NETBIOSNAME}.ldb |
+
+  ### Search Flow
+  1. Identify objectClass → see schema-compact.yml
+  2. Pick MINIMAL attributes → use weight (W5=must, W3=useful, W1=rare)
+  3. Build ldbsearch command → see commands-reference.yml
+  4. If mutation needed → use samba-tool → see commands-reference.yml

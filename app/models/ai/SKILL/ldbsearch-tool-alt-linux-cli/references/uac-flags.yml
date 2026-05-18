@@ -1,0 +1,278 @@
+# =============================================================================
+# USER ACCOUNT CONTROL (UAC) FLAGS — Bitmask Reference
+# Used in: userAccountControl attribute, ldbsearch bitwise filters
+# =============================================================================
+
+uac_flags:
+  # Bit: Decimal = Name (Description)
+  0x0001:
+    dec: 1
+    name: SCRIPT
+    desc: "Logon script executed"
+  0x0002:
+    dec: 2
+    name: ACCOUNTDISABLE
+    desc: "Account is disabled"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=2)"
+  0x0008:
+    dec: 8
+    name: HOMEDIR_REQUIRED
+    desc: "Home directory required"
+  0x0010:
+    dec: 16
+    name: LOCKOUT
+    desc: "Account is locked out"
+  0x0020:
+    dec: 32
+    name: PASSWD_NOTREQD
+    desc: "No password required"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=32)"
+  0x0040:
+    dec: 64
+    name: PASSWD_CANT_CHANGE
+    desc: "User cannot change password"
+  0x0080:
+    dec: 128
+    name: ENCRYPTED_TEXT_PWD_ALLOWED
+    desc: "Encrypted password allowed"
+  0x0100:
+    dec: 256
+    name: TEMP_DUPLICATE_ACCOUNT
+    desc: "Temp duplicate account"
+  0x0200:
+    dec: 512
+    name: NORMAL_ACCOUNT
+    desc: "Default user account type"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=512)"
+  0x0800:
+    dec: 2048
+    name: INTERDOMAIN_TRUST_ACCOUNT
+    desc: "Interdomain trust account"
+  0x1000:
+    dec: 4096
+    name: WORKSTATION_TRUST_ACCOUNT
+    desc: "Computer account (workstation)"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=4096)"
+  0x2000:
+    dec: 8192
+    name: SERVER_TRUST_ACCOUNT
+    desc: "Domain Controller account"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=8192)"
+  0x10000:
+    dec: 65536
+    name: DONT_EXPIRE_PASSWORD
+    desc: "Password never expires"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=65536)"
+  0x20000:
+    dec: 131072
+    name: MNS_LOGON_ACCOUNT
+    desc: "MNS logon account"
+  0x40000:
+    dec: 262144
+    name: SMARTCARD_REQUIRED
+    desc: "Smart card required for logon"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=262144)"
+  0x80000:
+    dec: 524288
+    name: TRUSTED_FOR_DELEGATION
+    desc: "Trusted for delegation"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=524288)"
+  0x100000:
+    dec: 1048576
+    name: NOT_DELEGATED
+    desc: "Not delegated (sensitive)"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=1048576)"
+  0x200000:
+    dec: 2097152
+    name: USE_DES_KEY_ONLY
+    desc: "Use DES key only"
+  0x400000:
+    dec: 4194304
+    name: DONT_REQ_PREAUTH
+    desc: "No Kerberos pre-auth required"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=4194304)"
+  0x800000:
+    dec: 8388608
+    name: PASSWORD_EXPIRED
+    desc: "Password is expired"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=8388608)"
+  0x1000000:
+    dec: 16777216
+    name: TRUSTED_TO_AUTH_FOR_DELEGATION
+    desc: "Trusted to auth for delegation (S4U2Proxy)"
+    filter: "(userAccountControl:1.2.840.113556.1.4.803:=16777216)"
+  0x04000000:
+    dec: 67108864
+    name: NO_AUTH_DATA_REQUIRED
+    desc: "No PAC in Kerberos tickets"
+
+# Common combined values
+common_values:
+  normal_user: 512
+  disabled_user: 514  # 512 + 2
+  normal_computer: 4096
+  dc: 8192
+  read_only_dc: 8192
+  trusted_for_delegation: 524800  # 512 + 524288
+  password_never_expires: 66048   # 512 + 65536
+  smartcard_required: 262656      # 512 + 262144
+
+# Quick filter builder
+filter_templates:
+  disabled: "(userAccountControl:1.2.840.113556.1.4.803:=2)"
+  not_disabled: "(!(userAccountControl:1.2.840.113556.1.4.803:=2))"
+  computer: "(userAccountControl:1.2.840.113556.1.4.803:=4096)"
+  dc: "(userAccountControl:1.2.840.113556.1.4.803:=8192)"
+  normal_user: "(userAccountControl:1.2.840.113556.1.4.803:=512)"
+  never_expire: "(userAccountControl:1.2.840.113556.1.4.803:=65536)"
+  smartcard: "(userAccountControl:1.2.840.113556.1.4.803:=262144)"
+  trusted_deleg: "(userAccountControl:1.2.840.113556.1.4.803:=524288)"
+  preauth_off: "(userAccountControl:1.2.840.113556.1.4.803:=4194304)"
+  password_expired: "(userAccountControl:1.2.840.113556.1.4.803:=8388608)"
+
+# =============================================================================
+# GROUP TYPE FLAGS
+# =============================================================================
+group_type_flags:
+  0x00000001:
+    dec: 1
+    name: BUILTIN_LOCAL_GROUP
+    desc: "Builtin group"
+  0x00000002:
+    dec: 2
+    name: GLOBAL_GROUP
+    desc: "Global scope"
+  0x00000004:
+    dec: 4
+    name: DOMAIN_LOCAL_GROUP
+    desc: "Domain local scope"
+  0x00000008:
+    dec: 8
+    name: UNIVERSAL_GROUP
+    desc: "Universal scope"
+  0x80000000:
+    dec: -2147483648
+    name: SECURITY_GROUP
+    desc: "Security group (else distribution)"
+
+group_common_values:
+  global_security: -2147483646  # 0x80000002
+  domain_local_security: -2147483644  # 0x80000004
+  universal_security: -2147483640  # 0x80000008
+  global_distribution: 2
+  domain_local_distribution: 4
+  universal_distribution: 8
+
+# =============================================================================
+# TRUST ATTRIBUTES FLAGS
+# =============================================================================
+trust_attributes:
+  0x00000001:
+    dec: 1
+    name: NON_TRANSITIVE
+    desc: "Non-transitive trust"
+  0x00000002:
+    dec: 2
+    name: UPLEVEL
+    desc: "Windows 2000+ trust"
+  0x00000004:
+    dec: 4
+    name: QUARANTINED
+    desc: "Quarantined (SID filtering)"
+  0x00000020:
+    dec: 32
+    name: FOREST_TRANSITIVE
+    desc: "Forest trust"
+  0x00000040:
+    dec: 64
+    name: CROSS_ORGANIZATION
+    desc: "Cross-organization (selective auth)"
+  0x00000080:
+    dec: 128
+    name: WITHIN_FOREST
+    desc: "Within same forest"
+  0x00000100:
+    dec: 256
+    name: TREAT_AS_EXTERNAL
+    desc: "Treat as external"
+  0x00000400:
+    dec: 1024
+    name: PIM_TRUST
+    desc: "Privileged Identity Management"
+
+trust_direction:
+  0: "Disabled"
+  1: "Incoming (inbound)"
+  2: "Outgoing (outbound)"
+  3: "Bidirectional"
+
+trust_type:
+  1: "Windows NT (downlevel)"
+  2: "Non-Windows (MIT/Heimdal Kerberos)"
+  3: "Windows 2000+ (uplevel)"
+
+# =============================================================================
+# DSA OPTIONS FLAGS (nTDSDSA options)
+# =============================================================================
+dsa_options:
+  0x00000001:
+    dec: 1
+    name: IS_GC
+    desc: "Global Catalog"
+  0x00000004:
+    dec: 4
+    name: DISABLE_INBOUND_REPL
+    desc: "Inbound replication disabled"
+  0x00000008:
+    dec: 8
+    name: DISABLE_OUTBOUND_REPL
+    desc: "Outbound replication disabled"
+  0x00000010:
+    dec: 16
+    name: IS_RODC
+    desc: "Read-Only Domain Controller"
+  0x00100000:
+    dec: 1048576
+    name: NO_NTDSCONN_DC
+    desc: "No NTDS-Connection generated by KCC"
+
+# =============================================================================
+# SYSTEM FLAGS
+# =============================================================================
+system_flags:
+  0x00000010:
+    dec: 16
+    name: FLAG_ATTR_NOT_REPLICATED
+    desc: "Not replicated"
+  0x00000020:
+    dec: 32
+    name: FLAG_ATTR_REQ_PARTIAL_SET
+    desc: "In partial attribute set"
+  0x00000040:
+    dec: 64
+    name: FLAG_ATTR_IS_CONSTRUCTED
+    desc: "Constructed attribute"
+  0x02000000:
+    dec: 33554432
+    name: FLAG_DOMAIN_DISALLOW_RENAME
+    desc: "Cannot rename"
+  0x04000000:
+    dec: 67108864
+    name: FLAG_DOMAIN_DISALLOW_MOVE
+    desc: "Cannot move"
+  0x08000000:
+    dec: 134217728
+    name: FLAG_CONFIG_ALLOW_LIMITED_MOVE
+    desc: "Limited move in config"
+  0x10000000:
+    dec: 268435456
+    name: FLAG_CONFIG_ALLOW_MOVE
+    desc: "Can move in config"
+  0x20000000:
+    dec: 536870912
+    name: FLAG_CONFIG_ALLOW_RENAME
+    desc: "Can rename in config"
+  0x80000000:
+    dec: -2147483648
+    name: FLAG_DISALLOW_DELETE
+    desc: "Cannot delete"

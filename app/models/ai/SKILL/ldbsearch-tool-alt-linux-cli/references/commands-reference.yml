@@ -1,0 +1,297 @@
+# =============================================================================
+# LDBSEARCH & SAMBA-TOOL FULL COMMAND REFERENCE — ALT Linux Samba AD
+# Token-optimized: every option listed, minimal descriptions
+# =============================================================================
+
+# ─── LDBSEARCH ────────────────────────────────────────────────────────────────
+ldbsearch:
+  synopsis: "ldbsearch [OPTIONS] [EXPRESSION] [ATTRIBUTES...]"
+  db_paths:
+    sam: "/var/lib/samba/private/sam.ldb"
+    secrets: "/var/lib/samba/private/secrets.ldb"
+
+  options:
+    H: {val: "URL", desc: "LDB URL/path", required: true, example: "-H /var/lib/samba/private/sam.ldb"}
+    s: {val: "SCOPE", desc: "Search scope", values: ["base", "sub", "one"], default: "sub"}
+    b: {val: "BASEDN", desc: "Base DN", example: "-b 'DC=kcrb,DC=local'"}
+    D: {val: "DN", desc: "Bind DN (if auth needed)", example: "-D 'CN=Admin,CN=Users,DC=kcrb,DC=local'"}
+    U: {val: "USER", desc: "Simple bind user"}
+    P: {val: "PASS", desc: "Simple bind password"}
+    r: {desc: "Recursive (follow referrals)"}
+    a: {desc: "Show all attributes (like LDAP *)"}
+    "cross-ncs": {desc: "Search across all naming contexts"}
+    controls: {val: "OID", desc: "LDAP control", example: "--controls=1.2.840.113556.1.4.801:0:1 (SD flags)"}
+    sorted: {val: "ATTR", desc: "Sort results by attribute"}
+    paged: {val: "SIZE", desc: "Paged results"}
+    "show-binary": {desc: "Show binary attrs as hex"}
+    "binary-output": {desc: "Output binary data"}
+    "single-value": {desc: "Only first value of multi-valued"}
+    "all-revoked": {desc: "Show deleted/tombstone objects (requires show-deleted control)"}
+
+  controls_common:
+    sd_flags: "1.2.840.113556.1.4.801:0:4 (Owner+Group DACL only) / :0:7 (all)"
+    show_deleted: "1.2.840.113556.1.4.417:0:0 (show recycled/deleted)"
+    lazy_commit: "1.2.840.113556.1.4.621"
+    permissive_modify: "1.2.840.113556.1.4.1413"
+    tree_delete: "1.2.840.113556.1.4.805"
+    domain_scope: "1.2.840.113556.1.4.1339:0:0 (no GC referral)"
+    search_hints: "1.2.840.113556.1.4.2206"
+
+  expression_syntax:
+    simple: "(attr=value)"
+    wildcard: "(cn=*)"
+    substring: "(cn=adm*)"
+    present: "(description=*)"
+    and: "(&(cond1)(cond2))"
+    or: "(|(cond1)(cond2))"
+    not: "(!(cond1))"
+    nested: "(&(|(a=1)(b=2))(!(c=3)))"
+    bitwise_and: "(userAccountControl:1.2.840.113556.1.4.803:=2)"
+    bitwise_or: "(userAccountControl:1.2.840.113556.1.4.804:=2)"
+    approx: "(cn~=admin)"
+    greater: "(pwdLastSet>=133000000000000000)"
+    less: "(badPwdCount<=3)"
+    dn_match: "(memberOf:1.2.840.113556.1.4.1941:=CN=Group,DC=x)"
+
+  common_bases:
+    domain: "DC=kcrb,DC=local"
+    users: "CN=Users,DC=kcrb,DC=local"
+    computers: "CN=Computers,DC=kcrb,DC=local"
+    builtin: "CN=Builtin,DC=kcrb,DC=local"
+    configuration: "CN=Configuration,DC=kcrb,DC=local"
+    schema: "CN=Schema,CN=Configuration,DC=kcrb,DC=local"
+    sites: "CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+    dns: "DC=DomainDnsZones,DC=kcrb,DC=local"
+    forest_dns: "DC=ForestDnsZones,DC=kcrb,DC=local"
+    system: "CN=System,DC=kcrb,DC=local"
+    pso: "CN=Password Settings Container,CN=System,DC=kcrb,DC=local"
+    managed_svc: "CN=Managed Service Accounts,DC=kcrb,DC=local"
+
+  examples:
+    count_users: "ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=user)' dn | grep -c '^dn:'"
+    find_user: "ldbsearch -H /var/lib/samba/private/sam.ldb '(sAMAccountName=ivanov)'"
+    user_attrs: "ldbsearch -H /var/lib/samba/private/sam.ldb '(sAMAccountName=ivanov)' sAMAccountName displayName mail memberOf"
+    all_groups: "ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=group)' cn sAMAccountName"
+    computer_list: "ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=computer)' cn dNSHostName operatingSystem"
+    ou_tree: "ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=organizationalUnit)' ou description gPLink"
+    group_members: "ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=group)(cn=Domain Admins))' member"
+    disabled: "ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=2))' sAMAccountName"
+    locked: "ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(lockoutTime>=1))' sAMAccountName lockoutTime"
+    gpo_list: "ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=groupPolicyContainer)' cn displayName gPCFileSysPath"
+    dns_zones: "ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=dnsZone)' dc dnsAllowDynamic"
+    trust_list: "ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=trustedDomain)' cn flatName trustDirection trustType trustAttributes"
+    schema_class: "ldbsearch -H /var/lib/samba/private/sam.ldb -b 'CN=Schema,CN=Configuration,DC=kcrb,DC=local' '(objectclass=subschema)' objectClasses"
+    deleted: "ldbsearch -H /var/lib/samba/private/sam.ldb --controls='1.2.840.113556.1.4.417:0:0' '(isDeleted=TRUE)' cn distinguishedName"
+    base_info: "ldbsearch -H /var/lib/samba/private/sam.ldb -s base -b '' '(objectclass=*)' namingContexts defaultNamingContext"
+    subtree_ou: "ldbsearch -H /var/lib/samba/private/sam.ldb -b 'OU=Office,DC=kcrb,DC=local' '(objectClass=user)' sAMAccountName"
+    pso_applied: "ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=msDS-PasswordSettings)' cn msDS-PSOAppliesTo msDS-MinimumPasswordLength"
+    spn_search: "ldbsearch -H /var/lib/samba/private/sam.ldb '(servicePrincipalName=HTTP/server.kcrb.local)' cn sAMAccountName servicePrincipalName"
+    nested_group: "ldbsearch -H /var/lib/samba/private/sam.ldb '(memberOf:1.2.840.113556.1.4.1941:=CN=Domain Admins,CN=Users,DC=kcrb,DC=local)' sAMAccountName"
+    cross_nc: "ldbsearch -H /var/lib/samba/private/sam.ldb --cross-ncs '(objectClass=crossRef)' cn nCName dnsRoot nETBIOSName"
+    site_servers: "ldbsearch -H /var/lib/samba/private/sam.ldb -b 'CN=Sites,CN=Configuration,DC=kcrb,DC=local' '(objectClass=server)' cn dNSHostName"
+
+# ─── LDBADD ───────────────────────────────────────────────────────────────────
+ldbadd:
+  synopsis: "ldbadd [OPTIONS] [LDIF-FILE]"
+  options:
+    H: {val: "URL", desc: "LDB URL/path", required: true}
+    "control": {val: "OID", desc: "Add control"}
+  note: "Use LDIF format. For user/group creation prefer samba-tool"
+
+# ─── LDBMODIFY ────────────────────────────────────────────────────────────────
+ldbmodify:
+  synopsis: "ldbmodify [OPTIONS] [LDIF-FILE]"
+  options:
+    H: {val: "URL", desc: "LDB URL/path", required: true}
+    "control": {val: "OID", desc: "Add control"}
+  note: "For simple changes prefer samba-tool or ldbedit"
+  example: |
+    # Disable a user via LDIF
+    dn: CN=user,CN=Users,DC=kcrb,DC=local
+    changetype: modify
+    replace: userAccountControl
+    userAccountControl: 514
+
+# ─── LDBDEL ───────────────────────────────────────────────────────────────────
+ldbdel:
+  synopsis: "ldbdel [OPTIONS] [DN...]"
+  options:
+    H: {val: "URL", desc: "LDB URL/path", required: true}
+    "control": {val: "OID", desc: "Add control (e.g., tree_delete)"}
+  example: "ldbdel -H /var/lib/samba/private/sam.ldb 'CN=test,CN=Users,DC=kcrb,DC=local'"
+
+# ─── LDBEDIT ──────────────────────────────────────────────────────────────────
+ldbedit:
+  synopsis: "ldbedit [OPTIONS] [EXPRESSION] [ATTRIBUTES...]"
+  options:
+    H: {val: "URL", desc: "LDB URL/path", required: true}
+    b: {val: "BASEDN", desc: "Base DN"}
+    s: {val: "SCOPE", desc: "Search scope", values: ["base", "sub", "one"]}
+    editor: {val: "CMD", desc: "Editor command", default: "$VISUAL or vi"}
+  note: "Opens matched records in $EDITOR, saves on exit"
+
+# ─── LDBRENAME ────────────────────────────────────────────────────────────────
+ldbrename:
+  synopsis: "ldbrename [OPTIONS] OLD-DN NEW-RDN"
+  options:
+    H: {val: "URL", desc: "LDB URL/path", required: true}
+  example: "ldbrename -H /var/lib/samba/private/sam.ldb 'CN=Old,OU=Org,DC=kcrb,DC=local' 'CN=New'"
+
+# ─── SAMBA-TOOL ──────────────────────────────────────────────────────────────
+samba_tool:
+  synopsis: "samba-tool <COMMAND> <SUBCOMMAND> [OPTIONS]"
+  global_options:
+    H: {val: "URL", desc: "LDB URL", example: "-H /var/lib/samba/private/sam.ldb"}
+    U: {val: "USER", desc: "Bind as user", example: "-U Administrator"}
+    "simple-bind-dn": {val: "DN", desc: "Simple bind DN"}
+    password: {val: "PASS", desc: "Password"}
+    k: {val: "yes/no", desc: "Kerberos", default: "yes"}
+    "configfile": {val: "PATH", desc: "smb.conf path"}
+    debuglevel: {val: "LEVEL", desc: "Debug level 0-10"}
+
+  user:
+    list: {desc: "List all users", opts: "[--base-dn=DN] [--filter=FILTER] [--long]"}
+    create: {desc: "Create user", opts: "USERNAME PASSWORD [--mail-address=EMAIL] [--unix-shell=SHELL] [--uid-number=UID] [--gid-number=GID] [--home-directory=HOME] [--surname=SN] [--given-name=GN] [--job-title=TITLE] [--department=DEPT] [--company=COMPANY] [--description=DESC] [--must-change-pwd] [--use-username-as-cn]"}
+    delete: {desc: "Delete user", opts: "USERNAME"}
+    setpassword: {desc: "Set password", opts: "USERNAME --newpassword=PASS [--must-change-at-next-logon] [--filter=FILTER]"}
+    getpassword: {desc: "Get password info", opts: "USERNAME [--attributes=ATTRS]"}
+    setexpiry: {desc: "Set expiry", opts: "USERNAME [--days=N] [--noexpiry]"}
+    disable: {desc: "Disable user", opts: "USERNAME"}
+    enable: {desc: "Enable user", opts: "USERNAME"}
+    getgroups: {desc: "User groups", opts: "USERNAME [--recursive]"}
+    addgroup: {desc: "Add to group", opts: "USERNAME GROUPNAME"}
+    removegroup: {desc: "Remove from group", opts: "USERNAME GROUPNAME"}
+    move: {desc: "Move to OU", opts: "USERNAME --new-parent-dn=OU_DN"}
+    rename: {desc: "Rename user", opts: "OLD_NAME NEW_NAME"}
+    show: {desc: "Show user details", opts: "USERNAME"}
+    edit: {desc: "Edit user in $EDITOR", opts: "USERNAME"}
+    listverbose: {desc: "Detailed list", opts: "[--base-dn=DN]"}
+    password: {desc: "Change own password", opts: "OLD PASS NEW PASS"}
+
+  group:
+    list: {desc: "List all groups", opts: "[--base-dn=DN] [--filter=FILTER]"}
+    listmembers: {desc: "List group members", opts: "GROUPNAME [--recursive]"}
+    add: {desc: "Create group", opts: "GROUPNAME [--description=DESC] [--mail-address=MAIL] [--gid-number=GID] [--group-scope=SCOPE] [--group-type=TYPE]"}
+    delete: {desc: "Delete group", opts: "GROUPNAME"}
+    addmembers: {desc: "Add members", opts: "GROUPNAME --members=USER1,USER2"}
+    removemembers: {desc: "Remove members", opts: "GROUPNAME --members=USER1,USER2"}
+    move: {desc: "Move group", opts: "GROUPNAME --new-parent-dn=OU_DN"}
+    show: {desc: "Show group details", opts: "GROUPNAME"}
+    rename: {desc: "Rename group", opts: "OLD NEW"}
+
+  computer:
+    list: {desc: "List computers", opts: "[--base-dn=DN] [--filter=FILTER]"}
+    create: {desc: "Create computer", opts: "COMPUTERNAME [--description=DESC] [--ou=OU_DN]"}
+    delete: {desc: "Delete computer", opts: "COMPUTERNAME"}
+    show: {desc: "Show details", opts: "COMPUTERNAME"}
+    move: {desc: "Move to OU", opts: "COMPUTERNAME --new-parent-dn=OU_DN"}
+    rename: {desc: "Rename", opts: "OLD NEW"}
+
+  ou:
+    list: {desc: "List OUs", opts: "[--base-dn=DN]"}
+    create: {desc: "Create OU", opts: "OUNAME [--description=DESC]"}
+    delete: {desc: "Delete OU", opts: "OUNAME [--force-subtree-delete]"}
+    move: {desc: "Move OU", opts: "OUNAME --new-parent-dn=OU_DN"}
+    rename: {desc: "Rename OU", opts: "OLD NEW"}
+    show: {desc: "Show OU details", opts: "OUNAME"}
+
+  gpo:
+    listall: {desc: "List all GPOs", opts: ""}
+    list: {desc: "List GPOs for target", opts: "TARGET_DN"}
+    show: {desc: "Show GPO", opts: "GPO_DN"}
+    create: {desc: "Create GPO", opts: "DISPLAYNAME [--domain=DOMAIN]"}
+    delete: {desc: "Delete GPO", opts: "GPO_DN [--domain=DOMAIN]"}
+    link: {desc: "Link GPO", opts: "GPO_DN --target=OU_DN [--order=N] [--enforced=yes/no]"}
+    unlink: {desc: "Unlink GPO", opts: "GPO_DN --target=OU_DN"}
+    getlink: {desc: "Get GPO links", opts: "OU_DN"}
+    aclcheck: {desc: "Check GPO ACLs", opts: "GPO_DN"}
+    fetch: {desc: "Download GPO", opts: "GPO_DN [--destination=DIR]"}
+    backup: {desc: "Backup GPO", opts: "GPO_DN --backupdir=DIR"}
+    restore: {desc: "Restore GPO", opts: "--backupdir=DIR [--gpo=GPO_GUID]"}
+    manage: {desc: "Manage GPO", subcmds: ["list", "apply", "unapply"]}
+    listobjects: {desc: "List objects in GPO", opts: "GPO_DN"}
+
+  dns:
+    query: {desc: "Query DNS", opts: "SERVER ZONE NAME [TYPE]"}
+    add: {desc: "Add DNS record", opts: "SERVER ZONE NAME TYPE DATA"}
+    delete: {desc: "Delete DNS record", opts: "SERVER ZONE NAME TYPE DATA"}
+    serverinfo: {desc: "DNS server info", opts: "SERVER"}
+    zonecreate: {desc: "Create zone", opts: "SERVER ZONE [--reverse]"}
+    zonedelete: {desc: "Delete zone", opts: "SERVER ZONE"}
+    zoneinfo: {desc: "Zone info", opts: "SERVER ZONE"}
+    zonelist: {desc: "List zones", opts: "SERVER"}
+    roothints: {desc: "Root hints", opts: "SERVER"}
+    update: {desc: "Update DNS record", opts: "SERVER ZONE NAME OLD_TYPE OLD_DATA NEW_DATA"}
+
+  site:
+    list: {desc: "List sites", opts: ""}
+    create: {desc: "Create site", opts: "SITENAME"}
+    delete: {desc: "Delete site", opts: "SITENAME"}
+    subnet: {subcmds: ["list", "create", "delete"], desc: "Manage subnets"}
+    server: {subcmds: ["create", "delete", "show"], desc: "Manage site servers"}
+    link: {subcmds: ["list", "create", "delete"], desc: "Manage site links"}
+    bridge: {subcmds: ["list", "create", "delete"], desc: "Manage site link bridges"}
+
+  fsmo:
+    show: {desc: "Show FSMO roles", opts: ""}
+    transfer: {desc: "Transfer role", opts: "--role=ROLE (rid|pdc|infrastructure|naming|schema)"}
+    seize: {desc: "Seize role", opts: "--role=ROLE"}
+
+  drs:
+    showrepl: {desc: "Show replication status", opts: ""}
+    bind: {desc: "DRS bind", opts: "SERVER"}
+    replicate: {desc: "Force replication", opts: "DEST_DC SOURCE_DC NC_DN"}
+    kcc: {desc: "Trigger KCC", opts: "[--site=SITE]"}
+    options: {desc: "Show/set DSA options", opts: "SERVER [--option=VAL]"}
+    outstanding: {desc: "Outgoing changes", opts: "NC_DN SERVER"}
+    replicate-nc: {desc: "Replicate NC", opts: ""}
+
+  trust:
+    list: {desc: "List trusts", opts: ""}
+    create: {desc: "Create trust", opts: "DOMAIN [--type=TYPE] [--direction=DIR] [--trustsecret=PASS]"}
+    delete: {desc: "Delete trust", opts: "DOMAIN"}
+    show: {desc: "Show trust", opts: "DOMAIN"}
+    validate: {desc: "Validate trust", opts: "DOMAIN"}
+    namespaces: {desc: "Show namespaces", opts: "DOMAIN"}
+
+  spn:
+    list: {desc: "List SPNs", opts: "ACCOUNT"}
+    add: {desc: "Add SPN", opts: "ACCOUNT SPN"}
+    delete: {desc: "Delete SPN", opts: "ACCOUNT SPN"}
+
+  ntacl:
+    get: {desc: "Get NT ACL", opts: "FILE [--as-sddl]"}
+    set: {desc: "Set NT ACL", opts: "FILE --sddl=SDDL"}
+    sysvolcheck: {desc: "Check sysvol ACLs", opts: ""}
+    sysvolreset: {desc: "Reset sysvol ACLs", opts: ""}
+
+  domain:
+    level: {desc: "Show/set domain/forest functional level", opts: "[--domain-level=N] [--forest-level=N]"}
+    info: {desc: "Domain info", opts: ""}
+    passwordsettings: {desc: "Password policy", subcmds: ["show", "set"]}
+    provision: {desc: "Provision new domain", opts: "[--realm=R] [--domain=D] [--server-role=ROLE]"}
+    join: {desc: "Join domain", opts: "DOMAIN [--server=DC] [--username=USER]"}
+    demote: {desc: "Demote DC", opts: ""}
+
+  ldapcmp: {desc: "Compare two LDAP DBs", opts: "URL1 URL2"}
+  time: {desc: "Show DC time", opts: ""}
+  testparm: {desc: "Test config", opts: ""}
+
+# ─── LDAPSEARCH (alternative via SASL) ────────────────────────────────────────
+ldapsearch:
+  note: "Use ONLY when ldbsearch unavailable or need GSSAPI SASL auth"
+  synopsis: "ldapsearch -H ldap://localhost [OPTIONS] [FILTER] [ATTRS...]"
+  auth:
+    Y_GSSAPI: "-Y GSSAPI (Kerberos SASL)"
+    Y_DIGEST: "-Y DIGEST-MD5 -U user"
+    x_simple: "-x -D 'DN' -W (simple bind)"
+  key_options:
+    b: "Base DN"
+    s: "Scope (base/sub/one)"
+    L_LL_LLL: "Output format (LDIF variants)"
+    z: "Size limit"
+    l: "Time limit"
+    o: "SASL options"
+    E: "Server controls"
+    vv_vvv: "Verbosity"
+  example: "ldapsearch -H ldap://localhost -Y GSSAPI -b 'DC=kcrb,DC=local' '(objectClass=user)' sAMAccountName cn"

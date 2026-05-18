@@ -1,0 +1,148 @@
+# =============================================================================
+# DN PATHS & CONTAINER LAYOUT — ALT Linux Samba AD
+# Domain: DC=kcrb,DC=local  (replace kcrb/local with your domain)
+# =============================================================================
+
+# ─── NAMING CONTEXTS (Partitions) ────────────────────────────────────────────
+naming_contexts:
+  domain: "DC=kcrb,DC=local"
+  configuration: "CN=Configuration,DC=kcrb,DC=local"
+  schema: "CN=Schema,CN=Configuration,DC=kcrb,DC=local"
+  domain_dns: "DC=DomainDnsZones,DC=kcrb,DC=local"
+  forest_dns: "DC=ForestDnsZones,DC=kcrb,DC=local"
+
+# ─── DOMAIN NC LAYOUT ────────────────────────────────────────────────────────
+domain_nc:
+  root: "DC=kcrb,DC=local"
+  builtin: "CN=Builtin,DC=kcrb,DC=local"
+  computers: "CN=Computers,DC=kcrb,DC=local"
+  users: "CN=Users,DC=kcrb,DC=local"
+  deleted_objects: "CN=Deleted Objects,DC=kcrb,DC=local"
+  system: "CN=System,DC=kcrb,DC=local"
+  managed_service_accounts: "CN=Managed Service Accounts,DC=kcrb,DC=local"
+  password_settings: "CN=Password Settings Container,CN=System,DC=kcrb,DC=local"
+  default_quota: "CN=NTDS Quotas,DC=kcrb,DC=local"
+  foreign_security_principals: "CN=ForeignSecurityPrincipals,DC=kcrb,DC=local"
+  program_data: "CN=Program Data,DC=kcrb,DC=local"
+  microsoft: "CN=Microsoft,CN=Program Data,DC=kcrb,DC=local"
+
+# ─── SYSTEM SUBCONTAINERS ────────────────────────────────────────────────────
+system_subcontainers:
+  dfs: "CN=Dfs,CN=System,DC=kcrb,DC=local"
+  ipsec: "CN=IPSec,CN=System,DC=kcrb,DC=local"
+  rpc_services: "CN=RpcServices,CN=System,DC=kcrb,DC=local"
+  default_quota: "CN=Default-First-Site-Name,CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  file_link_tracking: "CN=FileLinkTracking,CN=System,DC=kcrb,DC=local"
+  winsr: "CN=Winssrv,CN=System,DC=kcrb,DC=local"
+  pki: "CN=Public Key Services,CN=Services,CN=Configuration,DC=kcrb,DC=local"
+  dhcp: "CN=NetServices,CN=Services,CN=Configuration,DC=kcrb,DC=local"
+
+# ─── CONFIGURATION NC LAYOUT ────────────────────────────────────────────────
+configuration_nc:
+  root: "CN=Configuration,DC=kcrb,DC=local"
+  sites: "CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  services: "CN=Services,CN=Configuration,DC=kcrb,DC=local"
+  display_specifiers: "CN=DisplaySpecifiers,CN=Configuration,DC=kcrb,DC=local"
+  extended_rights: "CN=Extended-Rights,CN=Configuration,DC=kcrb,DC=local"
+  partitions: "CN=Partitions,CN=Configuration,DC=kcrb,DC=local"
+  physical_locations: "CN=Physical Locations,CN=Configuration,DC=kcrb,DC=local"
+
+# ─── SITES LAYOUT ────────────────────────────────────────────────────────────
+sites_layout:
+  sites_container: "CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  site_template: "CN={SITE_NAME},CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  servers_template: "CN=Servers,CN={SITE_NAME},CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  server_template: "CN={SERVER_NAME},CN=Servers,CN={SITE_NAME},CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  ntds_settings: "CN=NTDS Settings,CN={SERVER_NAME},CN=Servers,CN={SITE_NAME},CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  subnets: "CN=Subnets,CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  subnet_template: "CN={CIDR},CN=Subnets,CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  inter_site_transports: "CN=Inter-Site Transports,CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  ip_container: "CN=IP,CN=Inter-Site Transports,CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  smtp_container: "CN=SMTP,CN=Inter-Site Transports,CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  site_link_template: "CN={LINK_NAME},CN=IP,CN=Inter-Site Transports,CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+
+# ─── SERVICES LAYOUT (Configuration) ────────────────────────────────────────
+services_layout:
+  pki: "CN=Public Key Services,CN=Services,CN=Configuration,DC=kcrb,DC=local"
+  certification_authorities: "CN=Certification Authorities,CN=Public Key Services,CN=Services,CN=Configuration,DC=kcrb,DC=local"
+  enrollment_services: "CN=Enrollment Services,CN=Public Key Services,CN=Services,CN=Configuration,DC=kcrb,DC=local"
+  certificate_templates: "CN=Certificate Templates,CN=Public Key Services,CN=Services,CN=Configuration,DC=kcrb,DC=local"
+  afs: "CN=AFS,CN=Services,CN=Configuration,DC=kcrb,DC=local"
+  rpc: "CN=Rpc,CN=Services,CN=Configuration,DC=kcrb,DC=local"
+  dns: "CN=DNS,CN=Services,CN=Configuration,DC=kcrb,DC=local"
+
+# ─── DNS ZONE DNs ───────────────────────────────────────────────────────────
+dns_zone_dns:
+  forward_template: "DC={ZONE_NAME},DC=DomainDnsZones,DC=kcrb,DC=local"
+  reverse_template: "DC={REVERSE_ZONE},DC=DomainDnsZones,DC=kcrb,DC=local"
+  forest_forward_template: "DC={ZONE_NAME},DC=ForestDnsZones,DC=kcrb,DC=local"
+  forest_reverse_template: "DC={REVERSE_ZONE},DC=ForestDnsZones,DC=kcrb,DC=local"
+  record_template: "DC={HOST},DC={ZONE_NAME},DC=DomainDnsZones,DC=kcrb,DC=local"
+
+# ─── WELL-KNOWN OBJECTS ─────────────────────────────────────────────────────
+well_known:
+  default_site: "CN=Default-First-Site-Name,CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  domain_admins: "CN=Domain Admins,CN=Users,DC=kcrb,DC=local"
+  domain_users: "CN=Domain Users,CN=Users,DC=kcrb,DC=local"
+  domain_computers: "CN=Domain Computers,CN=Users,DC=kcrb,DC=local"
+  domain_guests: "CN=Domain Guests,CN=Users,DC=kcrb,DC=local"
+  enterprise_admins: "CN=Enterprise Admins,CN=Users,DC=kcrb,DC=local"
+  schema_admins: "CN=Schema Admins,CN=Users,DC=kcrb,DC=local"
+  administrators: "CN=Administrators,CN=Builtin,DC=kcrb,DC=local"
+  users_builtin: "CN=Users,CN=Builtin,DC=kcrb,DC=local"
+  guests: "CN=Guests,CN=Builtin,DC=kcrb,DC=local"
+  denied_rodc: "CN=Denied RODC Password Replication Group,CN=Users,DC=kcrb,DC=local"
+  allowed_rodc: "CN=Allowed RODC Password Replication Group,CN=Users,DC=kcrb,DC=local"
+  dns_admins: "CN=DnsAdmins,CN=Users,DC=kcrb,DC=local"
+  krbtgt: "CN=krbtgt,CN=Users,DC=kcrb,DC=local"
+
+# ─── WELL-KNOWN SIDs ────────────────────────────────────────────────────────
+well_known_sids:
+  s_1_5_32_544: "BUILTIN\\Administrators"
+  s_1_5_32_545: "BUILTIN\\Users"
+  s_1_5_32_546: "BUILTIN\\Guests"
+  s_1_5_32_548: "BUILTIN\\Account Operators"
+  s_1_5_32_549: "BUILTIN\\Server Operators"
+  s_1_5_32_550: "BUILTIN\\Print Operators"
+  s_1_5_32_551: "BUILTIN\\Backup Operators"
+  s_1_5_32_552: "BUILTIN\\Replicator"
+  s_1_5_32_554: "BUILTIN\\Pre-Windows 2000 Compatible Access"
+  s_1_5_32_555: "BUILTIN\\Remote Desktop Users"
+  s_1_5_32_558: "BUILTIN\\Network Configuration Operators"
+  s_1_5_32_569: "BUILTIN\\Cryptographic Operators"
+  s_1_5_32_573: "BUILTIN\\Event Log Readers"
+  s_1_5_32_574: "BUILTIN\\Certificate Service DCOM Access"
+  s_1_5_32_575: "BUILTIN\\RDS Remote Access Servers"
+  s_1_5_32_576: "BUILTIN\\RDS Endpoint Servers"
+  s_1_5_32_577: "BUILTIN\\RDS Management Servers"
+  s_1_5_32_578: "BUILTIN\\Hyper-V Administrators"
+  s_1_5_32_579: "BUILTIN\\Access Control Assistance Operators"
+  s_1_5_32_580: "BUILTIN\\Remote Management Users"
+  domain_admins_rid: "512"
+  domain_users_rid: "513"
+  domain_guests_rid: "514"
+  domain_computers_rid: "515"
+  domain_controllers_rid: "516"
+  schema_admins_rid: "518"
+  enterprise_admins_rid: "519"
+  krbtgt_rid: "502"
+
+# ─── FSDB ROLES DN ──────────────────────────────────────────────────────────
+fsmo_dn:
+  schema_owner: "CN=Schema,CN=Configuration,DC=kcrb,DC=local (fSMORoleOwner)"
+  naming_owner: "CN=Partitions,CN=Configuration,DC=kcrb,DC=local (fSMORoleOwner)"
+  rid_owner: "CN=RID Manager$,CN=System,DC=kcrb,DC=local (fSMORoleOwner)"
+  pdc_owner: "DC=kcrb,DC=local (fSMORoleOwner)"
+  infrastructure_owner: "CN=Infrastructure,DC=kcrb,DC=local (fSMORoleOwner)"
+
+# ─── SEARCH BASES (quick reference for -b flag) ────────────────────────────
+quick_bases:
+  domain: "DC=kcrb,DC=local"
+  config: "CN=Configuration,DC=kcrb,DC=local"
+  schema: "CN=Schema,CN=Configuration,DC=kcrb,DC=local"
+  sites: "CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  subnets: "CN=Subnets,CN=Sites,CN=Configuration,DC=kcrb,DC=local"
+  partitions: "CN=Partitions,CN=Configuration,DC=kcrb,DC=local"
+  pki: "CN=Public Key Services,CN=Services,CN=Configuration,DC=kcrb,DC=local"
+  dns_domain: "DC=DomainDnsZones,DC=kcrb,DC=local"
+  dns_forest: "DC=ForestDnsZones,DC=kcrb,DC=local"

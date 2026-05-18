@@ -1,0 +1,452 @@
+# =============================================================================
+# SEARCH TEMPLATES — Copy-Paste Ready for AI Agent
+# DB=sam.ldb  DOMAIN=DC=kcrb,DC=local  (adjust for your domain)
+# Token-minimal: use shortest unique attribute subset
+# =============================================================================
+
+# ─── USER QUERIES ────────────────────────────────────────────────────────────
+templates_user:
+  count_all:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=user)' dn | grep -c '^dn:'"
+    desc: "Count all users"
+    token_cost: 1
+
+  count_active:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))' dn | grep -c '^dn:'"
+    desc: "Count active (non-disabled) users"
+    token_cost: 1
+
+  find_by_login:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(sAMAccountName={LOGIN})' sAMAccountName displayName mail memberOf userAccountControl"
+    desc: "Find user by sAMAccountName"
+    token_cost: 2
+
+  find_by_cn_wildcard:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(cn=*{PARTIAL}* ))' sAMAccountName cn"
+    desc: "Find users by partial CN"
+    token_cost: 2
+
+  user_full:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(sAMAccountName={LOGIN})' sAMAccountName cn displayName givenName sn mail title department company manager memberOf primaryGroupID userAccountControl pwdLastSet lastLogonTimestamp accountExpires lockoutTime badPwdCount uidNumber gidNumber loginShell unixHomeDirectory"
+    desc: "Full user profile"
+    token_cost: 5
+
+  user_groups_recursive:
+    cmd: "sudo samba-tool user getgroups {LOGIN} --recursive"
+    desc: "All groups (including nested)"
+    token_cost: 1
+
+  disabled_users:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=2))' sAMAccountName cn"
+    desc: "List disabled users"
+    token_cost: 2
+
+  locked_users:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(lockoutTime>=1))' sAMAccountName lockoutTime"
+    desc: "List locked users"
+    token_cost: 2
+
+  password_never_expires:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=65536))' sAMAccountName cn"
+    desc: "Users with password-never-expires"
+    token_cost: 2
+
+  password_not_required:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=32))' sAMAccountName cn"
+    desc: "Users with password-not-required"
+    token_cost: 2
+
+  delegated_auth:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=524288))' sAMAccountName cn"
+    desc: "Trusted for delegation"
+    token_cost: 2
+
+  users_in_ou:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb -b 'OU={OU_NAME},DC=kcrb,DC=local' '(objectClass=user)' sAMAccountName cn"
+    desc: "Users in specific OU"
+    token_cost: 2
+
+  users_no_logon_long:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(lastLogonTimestamp<=131800000000000000))' sAMAccountName lastLogonTimestamp"
+    desc: "Users inactive >90 days (adjust timestamp)"
+    token_cost: 2
+
+  admin_users:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=user)(adminCount=1))' sAMAccountName cn"
+    desc: "Users with adminCount=1 (protected)"
+    token_cost: 2
+
+# ─── GROUP QUERIES ───────────────────────────────────────────────────────────
+templates_group:
+  list_all:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=group)' cn sAMAccountName groupType"
+    desc: "All groups with type"
+    token_cost: 3
+
+  group_members:
+    cmd: "sudo samba-tool group listmembers '{GROUP}'"
+    desc: "Direct members of group"
+    token_cost: 1
+
+  group_members_recursive:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(memberOf:1.2.840.113556.1.4.1941:=CN={GROUP},CN=Users,DC=kcrb,DC=local)' sAMAccountName"
+    desc: "Nested members (LDAP_MATCHING_RULE_IN_CHAIN)"
+    token_cost: 2
+
+  group_detail:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=group)(sAMAccountName={GROUP}))' cn sAMAccountName member memberOf description groupType mail managedBy gidNumber"
+    desc: "Full group info"
+    token_cost: 3
+
+  security_groups:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=group)(groupType:1.2.840.113556.1.4.804:=2147483648))' cn sAMAccountName"
+    desc: "Security groups only"
+    token_cost: 2
+
+  distribution_groups:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=group)(!(groupType:1.2.840.113556.1.4.804:=2147483648)))' cn sAMAccountName"
+    desc: "Distribution groups only"
+    token_cost: 2
+
+  empty_groups:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=group)(!(member=*)))' cn sAMAccountName"
+    desc: "Groups with no members"
+    token_cost: 2
+
+  builtin_groups:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb -b 'CN=Builtin,DC=kcrb,DC=local' '(objectClass=group)' cn sAMAccountName"
+    desc: "Builtin groups"
+    token_cost: 2
+
+# ─── COMPUTER QUERIES ────────────────────────────────────────────────────────
+templates_computer:
+  list_all:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=computer)' cn dNSHostName operatingSystem operatingSystemVersion userAccountControl lastLogonTimestamp"
+    desc: "All computers with OS"
+    token_cost: 4
+
+  count:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=computer)' dn | grep -c '^dn:'"
+    desc: "Count computers"
+    token_cost: 1
+
+  dc_list:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=computer)(userAccountControl:1.2.840.113556.1.4.803:=8192))' cn dNSHostName"
+    desc: "Domain Controllers"
+    token_cost: 2
+
+  disabled_computers:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=computer)(userAccountControl:1.2.840.113556.1.4.803:=2))' cn"
+    desc: "Disabled computer accounts"
+    token_cost: 2
+
+  computer_by_name:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=computer)(cn={NAME}))' cn dNSHostName operatingSystem managedBy memberOf servicePrincipalName"
+    desc: "Computer by name"
+    token_cost: 2
+
+  computers_by_os:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=computer)(operatingSystem=*Linux*))' cn dNSHostName operatingSystem"
+    desc: "Computers by OS pattern"
+    token_cost: 2
+
+  stale_computers:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=computer)(lastLogonTimestamp<=131800000000000000))' cn dNSHostName lastLogonTimestamp"
+    desc: "Inactive computers >90d"
+    token_cost: 2
+
+# ─── OU QUERIES ──────────────────────────────────────────────────────────────
+templates_ou:
+  tree:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=organizationalUnit)' ou description gPLink gPOptions"
+    desc: "Full OU tree with GPO links"
+    token_cost: 3
+
+  ou_detail:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=organizationalUnit)(ou={NAME}))' ou description managedBy gPLink gPOptions"
+    desc: "OU details"
+    token_cost: 2
+
+  sub_ous:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb -b 'OU={PARENT},DC=kcrb,DC=local' -s one '(objectClass=organizationalUnit)' ou"
+    desc: "Child OUs"
+    token_cost: 1
+
+# ─── GPO QUERIES ─────────────────────────────────────────────────────────────
+templates_gpo:
+  list_all:
+    cmd: "sudo samba-tool gpo listall"
+    desc: "All GPOs"
+    token_cost: 2
+
+  gpo_detail:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(&(objectClass=groupPolicyContainer)(cn={GUID}))' cn displayName gPCFileSysPath versionNumber"
+    desc: "GPO by GUID"
+    token_cost: 2
+
+  gpo_links:
+    cmd: "sudo samba-tool gpo getlink 'OU={OU},DC=kcrb,DC=local'"
+    desc: "GPOs linked to OU"
+    token_cost: 1
+
+# ─── DNS QUERIES ─────────────────────────────────────────────────────────────
+templates_dns:
+  zones:
+    cmd: "sudo samba-tool dns query localhost kcrb.local @ ALL"
+    desc: "All DNS zones/records"
+    token_cost: 2
+
+  zone_records:
+    cmd: "sudo samba-tool dns query localhost kcrb.local {NAME} ALL"
+    desc: "Records for name"
+    token_cost: 1
+
+  a_record:
+    cmd: "sudo samba-tool dns query localhost kcrb.local {NAME} A"
+    desc: "A record"
+    token_cost: 1
+
+  ptr_record:
+    cmd: "sudo samba-tool dns query localhost 168.192.in-addr.arpa {IP} PTR"
+    desc: "PTR record"
+    token_cost: 1
+
+  srv_record:
+    cmd: "sudo samba-tool dns query localhost kcrb.local _ldap._tcp SRV"
+    desc: "SRV records"
+    token_cost: 1
+
+  cname_record:
+    cmd: "sudo samba-tool dns query localhost kcrb.local {NAME} CNAME"
+    desc: "CNAME record"
+    token_cost: 1
+
+  zone_list:
+    cmd: "sudo samba-tool dns zonelist localhost"
+    desc: "List DNS zones"
+    token_cost: 1
+
+  add_record:
+    cmd: "sudo samba-tool dns add localhost kcrb.local {NAME} A {IP}"
+    desc: "Add A record"
+    token_cost: 1
+
+  delete_record:
+    cmd: "sudo samba-tool dns delete localhost kcrb.local {NAME} A {IP}"
+    desc: "Delete A record"
+    token_cost: 1
+
+# ─── TRUST QUERIES ───────────────────────────────────────────────────────────
+templates_trust:
+  list:
+    cmd: "sudo samba-tool trust list"
+    desc: "All trusts"
+    token_cost: 1
+
+  detail:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb '(objectClass=trustedDomain)' cn flatName trustDirection trustType trustAttributes"
+    desc: "Trust details"
+    token_cost: 3
+
+  validate:
+    cmd: "sudo samba-tool trust validate {DOMAIN}"
+    desc: "Validate trust"
+    token_cost: 1
+
+# ─── SITE/REPLICATION QUERIES ────────────────────────────────────────────────
+templates_site:
+  list_sites:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb -b 'CN=Sites,CN=Configuration,DC=kcrb,DC=local' '(objectClass=site)' cn location"
+    desc: "AD sites"
+    token_cost: 2
+
+  list_subnets:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb -b 'CN=Subnets,CN=Sites,CN=Configuration,DC=kcrb,DC=local' '(objectClass=subnet)' cn siteObject location"
+    desc: "Subnets and site assignment"
+    token_cost: 2
+
+  replication:
+    cmd: "sudo samba-tool drs showrepl"
+    desc: "Replication status"
+    token_cost: 2
+
+  fsmo:
+    cmd: "sudo samba-tool fsmo show"
+    desc: "FSMO role holders"
+    token_cost: 1
+
+  dc_servers:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb -b 'CN=Sites,CN=Configuration,DC=kcrb,DC=local' '(objectClass=server)' cn dNSHostName"
+    desc: "All DC server objects"
+    token_cost: 2
+
+  site_links:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb -b 'CN=Sites,CN=Configuration,DC=kcrb,DC=local' '(objectClass=siteLink)' cn siteList cost replInterval"
+    desc: "Site links"
+    token_cost: 2
+
+# ─── SCHEMA/METADATA QUERIES ─────────────────────────────────────────────────
+templates_schema:
+  naming_contexts:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb -s base -b '' '(objectclass=*)' namingContexts defaultNamingContext rootDomainNamingContext configurationNamingContext schemaNamingContext"
+    desc: "Root DSE naming contexts"
+    token_cost: 2
+
+  schema_classes:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb -b 'CN=Schema,CN=Configuration,DC=kcrb,DC=local' '(objectclass=subschema)' objectClasses"
+    desc: "Schema objectClasses"
+    token_cost: 5
+
+  schema_attrs:
+    cmd: "sudo ldbsearch -H /var/lib/samba/private/sam.ldb -b 'CN=Schema,CN=Configuration,DC=kcrb,DC=local' '(objectclass=subschema)' attributeTypes"
+    desc: "Schema attributeTypes"
+    token_cost: 5
+
+  domain_info:
+    cmd: "sudo samba-tool domain info"
+    desc: "Domain info"
+    token_cost: 1
+
+  forest_level:
+    cmd: "sudo samba-tool domain level"
+    desc: "Domain/forest functional level"
+    token_cost: 1
+
+# ─── MUTATION COMMANDS (samba-tool) ──────────────────────────────────────────
+templates_mutations:
+  user_create:
+    cmd: "sudo samba-tool user create {LOGIN} '{PASSWORD}' --given-name='{GN}' --surname='{SN}' --mail-address='{MAIL}' --unix-shell='/bin/bash' --uid-number={UID} --gid-number={GID}"
+    desc: "Create user with Unix attrs"
+    token_cost: 1
+
+  user_disable:
+    cmd: "sudo samba-tool user disable {LOGIN}"
+    desc: "Disable user"
+    token_cost: 1
+
+  user_enable:
+    cmd: "sudo samba-tool user enable {LOGIN}"
+    desc: "Enable user"
+    token_cost: 1
+
+  user_password:
+    cmd: "sudo samba-tool user setpassword {LOGIN} --newpassword='{PASS}'"
+    desc: "Set user password"
+    token_cost: 1
+
+  user_add_group:
+    cmd: "sudo samba-tool user addgroup {LOGIN} '{GROUP}'"
+    desc: "Add user to group"
+    token_cost: 1
+
+  user_remove_group:
+    cmd: "sudo samba-tool user removegroup {LOGIN} '{GROUP}'"
+    desc: "Remove user from group"
+    token_cost: 1
+
+  user_move:
+    cmd: "sudo samba-tool user move {LOGIN} --new-parent-dn='OU={OU},DC=kcrb,DC=local'"
+    desc: "Move user to OU"
+    token_cost: 1
+
+  user_delete:
+    cmd: "sudo samba-tool user delete {LOGIN}"
+    desc: "Delete user"
+    token_cost: 1
+
+  group_create:
+    cmd: "sudo samba-tool group add '{GROUP}' --description='{DESC}' --gid-number={GID}"
+    desc: "Create group"
+    token_cost: 1
+
+  group_add_members:
+    cmd: "sudo samba-tool group addmembers '{GROUP}' --members={U1},{U2}"
+    desc: "Add members to group"
+    token_cost: 1
+
+  group_remove_members:
+    cmd: "sudo samba-tool group removemembers '{GROUP}' --members={U1},{U2}"
+    desc: "Remove members from group"
+    token_cost: 1
+
+  group_delete:
+    cmd: "sudo samba-tool group delete '{GROUP}'"
+    desc: "Delete group"
+    token_cost: 1
+
+  computer_create:
+    cmd: "sudo samba-tool computer create {NAME}$ --description='{DESC}' --ou='OU={OU},DC=kcrb,DC=local'"
+    desc: "Create computer account"
+    token_cost: 1
+
+  computer_delete:
+    cmd: "sudo samba-tool computer delete {NAME}$"
+    desc: "Delete computer account"
+    token_cost: 1
+
+  ou_create:
+    cmd: "sudo samba-tool ou create '{OU}' --description='{DESC}'"
+    desc: "Create OU"
+    token_cost: 1
+
+  ou_delete:
+    cmd: "sudo samba-tool ou delete '{OU}' --force-subtree-delete"
+    desc: "Delete OU (with children)"
+    token_cost: 1
+
+  dns_add_a:
+    cmd: "sudo samba-tool dns add localhost kcrb.local {HOST} A {IP}"
+    desc: "Add DNS A record"
+    token_cost: 1
+
+  dns_delete_a:
+    cmd: "sudo samba-tool dns delete localhost kcrb.local {HOST} A {IP}"
+    desc: "Delete DNS A record"
+    token_cost: 1
+
+  fsmo_transfer:
+    cmd: "sudo samba-tool fsmo transfer --role={ROLE}"
+    desc: "Transfer FSMO role"
+    token_cost: 1
+
+  force_replication:
+    cmd: "sudo samba-tool drs replicate {DEST_DC} {SRC_DC} DC=kcrb,DC=local"
+    desc: "Force replication"
+    token_cost: 1
+
+# ─── PYTHON ONE-LINER PATTERNS ───────────────────────────────────────────────
+templates_python:
+  count_users:
+    cmd: "sudo python3 -c \"import subprocess; out=subprocess.check_output(['ldbsearch','-H','/var/lib/samba/private/sam.ldb','(objectClass=user)','dn']).decode(); print(sum(1 for l in out.splitlines() if l.startswith('dn: ')))\""
+    desc: "Count users via Python"
+    token_cost: 1
+
+  find_cyrillic:
+    cmd: "sudo python3 -c \"import subprocess; out=subprocess.check_output(['ldbsearch','-H','/var/lib/samba/private/sam.ldb','(&(objectClass=user)(cn=*п*))','dn','sAMAccountName']).decode(); print(out)\""
+    desc: "Find users with Cyrillic in CN"
+    token_cost: 2
+
+  user_groups_detail:
+    cmd: |
+      sudo python3 -c "
+      import subprocess, base64, re
+      out = subprocess.check_output(['ldbsearch','-H','/var/lib/samba/private/sam.ldb','(sAMAccountName={USER})','memberOf','primaryGroupID','objectSid']).decode()
+      member_of, primary_rid, domain_sid = [], None, None
+      for line in out.splitlines():
+          if line.startswith('memberOf::'):
+              member_of.append(base64.b64decode(line.split('::')[1]).decode('utf-8'))
+          elif line.startswith('memberOf:'):
+              member_of.append(line.split(':',1)[1].strip())
+          elif line.startswith('primaryGroupID:'):
+              primary_rid = line.split(':',1)[1].strip()
+          elif line.startswith('objectSid:'):
+              parts = line.split(':',1)[1].strip().split('-')
+              if len(parts)>1: domain_sid = '-'.join(parts[:-1])
+      if domain_sid and primary_rid:
+          grp = subprocess.check_output(['ldbsearch','-H','/var/lib/samba/private/sam.ldb',f'(objectSid={domain_sid}-{primary_rid})','cn']).decode()
+          for g in grp.splitlines():
+              if g.startswith('cn:'): print(f'Primary: {g.split(\":\",1)[1].strip()}')
+      for dn in member_of: print(f'MemberOf: {dn}')
+      "
+    desc: "User groups with primary group resolution"
+    token_cost: 3

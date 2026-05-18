@@ -1,0 +1,492 @@
+# =============================================================================
+# SCHEMA COMPACT REFERENCE — Token-Optimized
+# Weight: W5=always request, W3=commonly needed, W1=rare/special
+# Type:  S=string, I=integer, B=boolean(bit), D=DN, T=time, B64=binary, SID=SID
+# =============================================================================
+# Format: attribute : type : weight : description
+# =============================================================================
+
+# ─── TOP (all objects inherit) ───────────────────────────────────────────────
+top:
+  MUST: [objectClass, objectCategory, nTSecurityDescriptor, instanceType]
+  MAY_shortlist:
+    - cn:S:W5:common name
+    - displayName:S:W3:display name
+    - description:S:W3:description
+    - name:S:W5:RDN name
+    - distinguishedName:S:W5:full DN
+    - objectGUID:B64:W3:unique GUID
+    - objectSid:SID:W5:security identifier
+    - whenCreated:T:W3:creation time
+    - whenChanged:T:W3:last modify time
+    - memberOf:D:W5:groups this belongs to
+    - isDeleted:B:W3:tombstone flag
+    - uSNChanged:I:W1:USN version
+    - systemFlags:I:W1:system flags
+
+# ─── USER (objectClass=user) SUP organizationalPerson ────────────────────────
+# Most queried class — full attribute weight map
+user:
+  MUST: [cn]
+  KEY_ATTRS:
+    - sAMAccountName:S:W5:login name
+    - objectSid:SID:W5:SID
+    - objectClass:S:W5:object classes
+    - distinguishedName:S:W5:full DN
+  AUTH:
+    - userAccountControl:I:W5:account flags (see uac-flags.yml)
+    - pwdLastSet:T:W3:password last set
+    - accountExpires:T:W3:expiry
+    - lockoutTime:T:W3:lockout timestamp
+    - badPwdCount:I:W3:bad password count
+    - badPasswordTime:T:W1:bad pw time
+    - unicodePwd:B64:W1:password hash (admin only)
+    - userPassword:S:W1:password (SFU)
+  IDENTITY:
+    - cn:S:W5:common name
+    - displayName:S:W5:display name
+    - givenName:S:W3:first name
+    - sn:S:W3:last name
+    - initials:S:W1:initials
+    - mail:S:W3:email
+    - employeeID:S:W1:employee ID
+    - employeeNumber:S:W1:employee number
+    - employeeType:S:W1:employee type
+    - department:S:W1:department
+    - departmentNumber:S:W1:dept number
+    - title:S:W3:job title
+    - company:S:W1:company
+    - manager:D:W3:manager DN
+    - directReports:D:W1:reports DN list
+  PHONE:
+    - telephoneNumber:S:W3:office phone
+    - mobile:S:W3:mobile phone
+    - homePhone:S:W1:home phone
+    - pager:S:W1:pager
+    - facsimileTelephoneNumber:S:W1:fax
+    - ipPhone:S:W1:IP phone
+  ADDRESS:
+    - streetAddress:S:W1:street
+    - l:S:W1:city
+    - st:S:W1:state
+    - postalCode:S:W1:postal code
+    - co:S:W1:country
+    - countryCode:I:W1:country code
+    - physicalDeliveryOfficeName:S:W1:office
+  GROUPS:
+    - memberOf:D:W5:group memberships
+    - primaryGroupID:I:W5:primary group RID
+    - tokenGroups:SID:W1:all group SIDs
+  KERBEROS:
+    - userPrincipalName:S:W3:UPN (user@realm)
+    - servicePrincipalName:S:W3:SPN list
+    - msDS-SupportedEncryptionTypes:I:W1:enc types
+  LOGON:
+    - lastLogon:T:W3:last logon (non-replicated)
+    - lastLogonTimestamp:T:W3:last logon (replicated)
+    - lastLogoff:T:W1:last logoff
+    - logonCount:I:W1:logon count
+    - logonHours:B64:W1:permitted hours
+    - logonWorkstation:S:W1:allowed workstations
+    - userWorkstations:S:W1:allowed workstations
+  PROFILE:
+    - profilePath:S:W3:profile path
+    - scriptPath:S:W3:logon script
+    - homeDirectory:S:W3:home dir
+    - homeDrive:S:W3:home drive letter
+  TERMINAL_SERVICES:
+    - msTSAllowLogon:B:W1:TS allow
+    - msTSProfilePath:S:W1:TS profile
+    - msTSHomeDirectory:S:W1:TS home
+    - msTSHomeDrive:S:W1:TS home drive
+  SECURITY:
+    - adminCount:I:W3:adminCount (SD holder)
+    - msDS-AllowedToDelegateTo:S:W1:constrained delegation
+    - msDS-KeyCredentialLink:D:W1:WHfB keys
+    - msDS-SupportedEncryptionTypes:I:W1:kerb enc
+  SFU_UNIX:
+    - uidNumber:I:W3:UID (posix)
+    - gidNumber:I:W3:GID (posix)
+    - loginShell:S:W3:shell (posix)
+    - unixHomeDirectory:S:W3:home (posix)
+    - gecos:S:W1:gecos
+    - msSFU30Name:S:W1:SFU name
+    - msSFU30NisDomain:S:W1:SFU NIS domain
+
+# ─── COMPUTER (objectClass=computer) SUP user ────────────────────────────────
+computer:
+  MUST: [cn]
+  ADDS_OVER_USER:
+    - dNSHostName:S:W5:FQDN
+    - operatingSystem:S:W3:OS name
+    - operatingSystemVersion:S:W3:OS version
+    - operatingSystemServicePack:S:W1:SP
+    - operatingSystemHotfix:S:W1:hotfix
+    - objectClass:S:W5:must include "computer"
+    - managedBy:D:W3:managed by DN
+    - location:S:W1:location
+    - networkAddress:S:W1:network addr
+    - rIDSetReferences:D:W1:RID set
+    - msDS-isRODC:B:W3:is RODC flag
+    - msDS-isGC:B:W1:is GC flag
+    - msDS-SiteName:S:W1:AD site
+    - msDS-GenerationId:B64:W1:VM gen ID
+    - msDS-AdditionalDnsHostName:S:W1:alt DNS names
+    - msDS-HostServiceAccount:D:W1:host svc acct
+    - physicalLocationObject:D:W1:physical location
+    - volumeCount:I:W1:volume count
+    - machineRole:I:W1:machine role
+    - siteGUID:B64:W1:site GUID
+    - cn:S:W5:NetBIOS name (hostname$)
+  INHERITS_USER_AUTH:
+    - sAMAccountName:S:W5:hostname$
+    - userAccountControl:I:W5:UAC flags
+    - servicePrincipalName:S:W3:SPN list
+    - pwdLastSet:T:W3:computer pw last set
+    - lastLogonTimestamp:T:W3:last auth
+    - objectSid:SID:W5:computer SID
+
+# ─── GROUP (objectClass=group) ───────────────────────────────────────────────
+group:
+  MUST: [groupType]
+  KEY_ATTRS:
+    - cn:S:W5:group name
+    - sAMAccountName:S:W5:pre-Win2k name
+    - member:D:W5:member DN list
+    - memberOf:D:W3:nested group memberships
+    - groupType:I:W5:type flags
+    - objectSid:SID:W5:group SID
+    - primaryGroupToken:I:W3:primary group RID
+  META:
+    - description:S:W3:description
+    - mail:S:W3:email
+    - managedBy:D:W3:owner DN
+    - adminCount:I:W1:admin SD holder
+    - groupAttributes:I:W1:internal attrs
+    - msDS-AuthNPolicySiloMembersBL:D:W1:policy silo
+  GROUP_TYPE_BITS:
+    - "0x00000002=Global"
+    - "0x00000004=DomainLocal"
+    - "0x00000008=Universal"
+    - "0x80000000=Security (else Distribution)"
+    - "0x00000001=Builtin"
+  SFU:
+    - gidNumber:I:W3:GID (posix)
+    - memberUid:S:W3:member UIDs (posix)
+    - msSFU30PosixMember:S:W1:SFU posix member
+
+# ─── ORGANIZATIONAL UNIT (objectClass=organizationalUnit) ────────────────────
+organizationalUnit:
+  MUST: [ou]
+  KEY_ATTRS:
+    - ou:S:W5:OU name
+    - distinguishedName:S:W5:full DN
+    - description:S:W3:description
+    - managedBy:D:W3:manager DN
+  GPO:
+    - gPLink:S:W3:linked GPOs
+    - gPOptions:I:W3:GPO inheritance flags (0=not blocked, 1=blocked)
+  OTHER:
+    - countryCode:I:W1:country
+    - street:S:W1:street
+    - l:S:W1:city
+    - st:S:W1:state
+    - postalCode:S:W1:postal code
+
+# ─── TRUSTED DOMAIN (objectClass=trustedDomain) ─────────────────────────────
+trustedDomain:
+  MUST: []
+  KEY_ATTRS:
+    - cn:S:W5:trusted domain name
+    - trustType:I:W3:1=windows,2=non-windows,3=kerberos
+    - trustDirection:I:W5:0=disabled,1=incoming,2=outgoing,3=bidirectional
+    - trustAttributes:I:W3:trust attrs (1=non-trans,2=uplevel,4=quarantine,32=forest,64=cross-org,128=PAM)
+    - flatName:S:W5:NetBIOS name
+    - trustPartner:S:W3:partner DNS name
+    - securityIdentifier:SID:W3:partner SID
+    - msDS-SupportedEncryptionTypes:I:W1:enc types
+    - msDS-TrustForestTrustInfo:B64:W1:forest trust data
+    - trustAuthIncoming:B64:W1:incoming auth
+    - trustAuthOutgoing:B64:W1:outgoing auth
+
+# ─── DNS ZONE (objectClass=dnsZone) ──────────────────────────────────────────
+dnsZone:
+  MUST: [dc]
+  KEY_ATTRS:
+    - dc:S:W5:zone name
+    - distinguishedName:S:W5:zone DN
+    - dnsAllowDynamic:S:W3:dynamic updates
+    - dnsAllowXFR:S:W3:zone transfer
+    - dnsSecureSecondaries:S:W3:secure secondaries
+    - dnsNotifySecondaries:S:W3:notify
+    - managedBy:D:W1:managed by
+  DNSSEC:
+    - msDNS-IsSigned:B:W1:DNSSEC signed
+    - msDNS-SignWithNSEC3:B:W1:NSEC3
+    - msDNS-SigningKeys:B64:W1:signing keys
+    - msDNS-DSRecordAlgorithms:S:W1:DS algorithms
+
+# ─── DNS NODE (objectClass=dnsNode) ──────────────────────────────────────────
+dnsNode:
+  MUST: [dc]
+  KEY_ATTRS:
+    - dc:S:W5:hostname label
+    - dnsRecord:B64:W5:DNS records (binary)
+    - dNSTombstoned:B:W3:tombstone flag
+    - dNSProperty:B64:W1:properties
+
+# ─── SITE (objectClass=site) ─────────────────────────────────────────────────
+site:
+  MUST: []
+  KEY_ATTRS:
+    - cn:S:W5:site name
+    - location:S:W3:site location desc
+    - managedBy:D:W1:manager
+    - gPLink:S:W1:GPO links
+    - gPOptions:I:W1:GPO options
+    - mSMQSiteID:B64:W1:MSMQ site
+  INTERSITE:
+    - mSMQInterval1:I:W1
+    - mSMQInterval2:I:W1
+
+# ─── SERVER (objectClass=server) ─────────────────────────────────────────────
+server:
+  MUST: []
+  KEY_ATTRS:
+    - cn:S:W5:server name
+    - dNSHostName:S:W5:FQDN
+    - serverReference:D:W3:reference DN
+    - managedBy:D:W1:manager
+    - bridgeheadTransportList:D:W1:BH transports
+    - msDS-isGC:B:W1:is GC
+    - msDS-isRODC:B:W1:is RODC
+    - msDS-SiteName:S:W1:site name
+    - serialNumber:S:W1:serial
+
+# ─── nTDSDSA (DC object in Sites) ───────────────────────────────────────────
+nTDSDSA:
+  MUST: []
+  KEY_ATTRS:
+    - cn:S:W5:NTDS Settings
+    - msDS-Behavior-Version:I:W3:DC functional level
+    - msDS-hasMasterNCs:D:W3:master NCs
+    - msDS-hasFullReplicaNCs:D:W3:full replica NCs
+    - msDS-isGC:B:W3:is GC
+    - msDS-isRODC:B:W3:is RODC
+    - msDS-SiteName:S:W3:site name
+    - options:I:W3:DSA options
+    - invocationId:B64:W1:invocation ID
+    - hasMasterNCs:D:W1:master NCs (legacy)
+    - serverReference:D:W3:server ref
+
+# ─── PRINT QUEUE (objectClass=printQueue) ───────────────────────────────────
+printQueue:
+  MUST: [versionNumber, uNCName, shortServerName, serverName, printerName]
+  KEY_ATTRS:
+    - cn:S:W5:print queue name
+    - printerName:S:W5:printer name
+    - serverName:S:W5:print server
+    - uNCName:S:W5:UNC path
+    - driverName:S:W3:driver name
+    - driverVersion:I:W1:driver version
+    - location:S:W3:physical location
+    - printShareName:S:W3:share name
+    - portName:S:W3:port name
+    - printColor:B:W3:color capable
+    - printDuplexSupported:B:W3:duplex
+    - printPagesPerMinute:I:W3:PPM
+
+# ─── POSIX ACCOUNT (auxiliary) ───────────────────────────────────────────────
+posixAccount:
+  AUXILIARY: true
+  KEY_ATTRS:
+    - uid:S:W5:username
+    - uidNumber:I:W5:UID
+    - gidNumber:I:W5:GID
+    - homeDirectory:S:W5:home dir
+    - loginShell:S:W5:shell
+    - gecos:S:W3:GECOS
+    - userPassword:S:W1:password
+
+# ─── POSIX GROUP (auxiliary) ─────────────────────────────────────────────────
+posixGroup:
+  AUXILIARY: true
+  KEY_ATTRS:
+    - cn:S:W5:group name
+    - gidNumber:I:W5:GID
+    - memberUid:S:W5:member UIDs
+    - userPassword:S:W1:password
+
+# ─── GPO CONTAINER (objectClass=groupPolicyContainer) ───────────────────────
+groupPolicyContainer:
+  MUST: []
+  KEY_ATTRS:
+    - cn:S:W5:GPO GUID
+    - displayName:S:W5:GPO name
+    - gPCFileSysPath:S:W3:SYSVOL path
+    - gPCFunctionalityVersion:I:W1:version
+    - gPCMachineExtensionNames:S:W1:machine extensions
+    - gPCUserExtensionNames:S:W1:user extensions
+    - versionNumber:I:W3:version
+    - flags:I:W1:flags
+    - gPCWQLFilter:S:W1:WMI filter
+
+# ─── MSDS-PASSWORD SETTINGS (PSO) ───────────────────────────────────────────
+msDS-PasswordSettings:
+  MUST:
+    - msDS-PasswordHistoryLength:I
+    - msDS-PasswordSettingsPrecedence:I
+    - msDS-PasswordReversibleEncryptionEnabled:B
+    - msDS-LockoutThreshold:I
+    - msDS-LockoutDuration:I
+    - msDS-LockoutObservationWindow:I
+    - msDS-PasswordComplexityEnabled:B
+    - msDS-MinimumPasswordLength:I
+    - msDS-MinimumPasswordAge:I
+    - msDS-MaximumPasswordAge:I
+  MAY:
+    - msDS-PSOAppliesTo:D:W5:who this PSO applies to
+
+# ─── msDS-ManagedServiceAccount ──────────────────────────────────────────────
+msDS-ManagedServiceAccount:
+  SUP: computer
+  KEY_ATTRS:
+    - sAMAccountName:S:W5:MSA name (ends with $)
+    - objectSid:SID:W5:SID
+    - userAccountControl:I:W3:UAC
+
+# ─── msDS-GroupManagedServiceAccount ─────────────────────────────────────────
+msDS-GroupManagedServiceAccount:
+  SUP: computer
+  MUST: [msDS-ManagedPasswordInterval]
+  KEY_ATTRS:
+    - sAMAccountName:S:W5:gMSA name (ends with $)
+    - msDS-GroupMSAMembership:D:W3:who can read password
+    - msDS-ManagedPasswordInterval:I:W3:password change interval (days)
+    - msDS-ManagedPasswordId:D:W1:current pw ID
+    - msDS-ManagedPasswordPreviousId:D:W1:prev pw ID
+    - objectSid:SID:W5:SID
+
+# ─── CROSS REF (objectClass=crossRef) ────────────────────────────────────────
+crossRef:
+  MUST: [nCName, dnsRoot, cn]
+  KEY_ATTRS:
+    - cn:S:W5:partition name
+    - nCName:D:W5:naming context DN
+    - dnsRoot:S:W3:DNS root
+    - nETBIOSName:S:W5:NetBIOS name
+    - Enabled:B:W3:enabled
+    - msDS-Behavior-Version:I:W1:functional level
+    - trustParent:D:W1:parent trust
+
+# ─── SUBNET (objectClass=subnet) ─────────────────────────────────────────────
+subnet:
+  KEY_ATTRS:
+    - cn:S:W5:subnet CIDR
+    - siteObject:D:W5:associated site DN
+    - location:S:W3:description
+    - physicalLocationObject:D:W1:physical location
+
+# ─── SITELINK (objectClass=siteLink) ─────────────────────────────────────────
+siteLink:
+  MUST: [siteList]
+  KEY_ATTRS:
+    - cn:S:W5:site link name
+    - siteList:D:W5:connected sites
+    - cost:I:W3:cost
+    - replInterval:I:W3:replication interval (min)
+    - options:I:W1:options
+    - schedule:B64:W1:replication schedule
+
+# ─── CONTAINER (objectClass=container) ───────────────────────────────────────
+container:
+  MUST: [cn]
+  KEY_ATTRS:
+    - cn:S:W5:container name
+    - distinguishedName:S:W5:full DN
+    - description:S:W3:description
+
+# ─── DFSR CLASSES ─────────────────────────────────────────────────────────────
+msDFSR-ReplicationGroup:
+  MUST: [msDFSR-ReplicationGroupType]
+  KEY_ATTRS:
+    - cn:S:W5:RG name
+    - msDFSR-ReplicationGroupType:I:W3:0=other,1=domain-based
+    - description:S:W3:description
+    - msDFSR-FileFilter:S:W3:file filter
+    - msDFSR-DirectoryFilter:S:W3:dir filter
+    - msDFSR-Schedule:B64:W1:schedule
+
+msDFSR-ContentSet:
+  KEY_ATTRS:
+    - cn:S:W5:content set name
+    - msDFSR-DfsPath:S:W3:DFS path
+    - msDFSR-FileFilter:S:W3:file filter
+    - msDFSR-DirectoryFilter:S:W3:dir filter
+
+msDFSR-Member:
+  MUST: [msDFSR-ComputerReference]
+  KEY_ATTRS:
+    - cn:S:W5:member name
+    - msDFSR-ComputerReference:D:W5:computer DN
+    - serverReference:D:W3:server ref
+
+msDFSR-Connection:
+  MUST: [fromServer]
+  KEY_ATTRS:
+    - cn:S:W5:connection name
+    - fromServer:D:W5:source server DN
+    - msDFSR-Enabled:B:W3:enabled
+    - msDFSR-Schedule:B64:W1:schedule
+
+# ─── CERTIFICATION AUTHORITY ─────────────────────────────────────────────────
+certificationAuthority:
+  MUST: [cn, certificateRevocationList, cACertificate, authorityRevocationList]
+  KEY_ATTRS:
+    - cn:S:W5:CA name
+    - cACertificate:B64:W5:CA cert
+    - certificateRevocationList:B64:W3:CRL
+    - dNSHostName:S:W3:CA FQDN
+    - certificateTemplates:D:W3:templates
+    - cAUsages:S:W1:CA usages
+
+# ─── PKI CERTIFICATE TEMPLATE ────────────────────────────────────────────────
+pKICertificateTemplate:
+  KEY_ATTRS:
+    - cn:S:W5:template name
+    - displayName:S:W5:display name
+    - msPKI-Certificate-Name-Flag:I:W3:name flags
+    - msPKI-Enrollment-Flag:I:W3:enrollment flags
+    - msPKI-Private-Key-Flag:I:W3:key flags
+    - msPKI-Minimal-Key-Size:I:W3:min key size
+    - pKIExpirationPeriod:B64:W3:validity
+    - pKIOverlapPeriod:B64:W3:renewal overlap
+
+# =============================================================================
+# COMMON FILTER PATTERNS (token-minimal)
+# =============================================================================
+filters:
+  all_users: "(objectClass=user)"
+  all_computers: "(objectClass=computer)"
+  all_groups: "(objectClass=group)"
+  all_ous: "(objectClass=organizationalUnit)"
+  active_user: "(&(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))"
+  disabled_user: "(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=2))"
+  locked_user: "(&(objectClass=user)(lockoutTime>=1))"
+  user_by_name: "(sAMAccountName={name})"
+  group_by_name: "(&(objectClass=group)(sAMAccountName={name}))"
+  computer_by_name: "(&(objectClass=computer)(cn={name}))"
+  members_of_ou: "(|(objectClass=user)(objectClass=group)(objectClass=computer))"
+  gpo_all: "(objectClass=groupPolicyContainer)"
+  dns_zones: "(objectClass=dnsZone)"
+  dns_records: "(objectClass=dnsNode)"
+  trust_domains: "(objectClass=trustedDomain)"
+  sites: "(objectClass=site)"
+  subnets: "(objectClass=subnet)"
+  pso_all: "(objectClass=msDS-PasswordSettings)"
+  msa: "(objectClass=msDS-ManagedServiceAccount)"
+  gmsa: "(objectClass=msDS-GroupManagedServiceAccount)"
+  dc_list: "(objectClass=nTDSDSA)"
+  spn_service: "(servicePrincipalName={spn})"
+  pw_never_expires: "(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=65536))"
+  deleg_allowed: "(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=524288))"

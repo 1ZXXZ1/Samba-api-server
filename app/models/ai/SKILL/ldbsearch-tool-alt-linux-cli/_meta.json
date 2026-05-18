@@ -1,0 +1,19 @@
+{
+  "name": "ldbsearch-tool-alt-linux-cli",
+  "version": "1.1.0",
+  "description": "Token-optimized AI skill for querying Samba AD (ALT Linux) via ldbsearch/samba-tool CLI. Covers all objectClasses, weighted attributes, DN paths, and search patterns.",
+  "author": "kcrb",
+  "license": "MIT",
+  "tags": ["ldap", "samba", "ldbsearch", "alt-linux", "active-directory", "cli", "sysadmin"],
+  "requires": {
+    "bins": ["ldbsearch"],
+    "os": "linux"
+  },
+  "context_files": [
+    "references/commands-reference.yml",
+    "references/search-templates.yml",
+    "references/schema-compact.yml",
+    "references/uac-flags.yml",
+    "references/dn-paths.yml"
+  ]
+}
