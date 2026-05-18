@@ -44,8 +44,8 @@ pip install -r requirements.txt
 ### 2. Настройка
 
 ```bash
-cp .env.example .env
 # Отредактируйте .env - обязательно задайте SAMBA_API_KEY
+nano .env
 ```
 
 ### 3. Запуск
