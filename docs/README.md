@@ -106,22 +106,6 @@ python cli.py group list
 # SAMBA_API_SERVER=http://127.0.0.1:8099
 python cli.py user list  # .env загружается автоматически
 ```
-
-### Примеры команд
-
-```bash
-python cli.py user list
-python cli.py user create jsmith --given-name John --surname Smith
-python cli.py user show jsmith
-python cli.py group list
-python cli.py domain info --ip-address 127.0.0.1
-python cli.py dns zones list --server dc1.example.com
-python cli.py fsmo show
-python cli.py drs showrepl
-python cli.py gpo list
-python cli.py misc testparm
-```
-
 ## Совместимость версий samba-tool
 
 API-сервер автоматически адаптируется к установленной версии `samba-tool`. Поддерживаются три уровня совместимости JSON-вывода:
